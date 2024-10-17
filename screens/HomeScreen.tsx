@@ -1,27 +1,69 @@
 import * as React from 'react';
 import {
   TouchableOpacity,
-  Image,
   View,
   TextInput,
   FlatList,
   Text,
+  ActivityIndicator,
+  StyleSheet,
+  Image,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {fetchMovies, setSelectedMovie} from '../store/actions';
 import {debounce} from 'lodash';
 import {Movie} from '../store/app.reducer';
 import FastImage from 'react-native-fast-image';
+import images from '../assets/images';
+
+const RenderMovieItem = React.memo(({item, index, onPress}) => {
+  const [loadingImage, setLoadingImage] = React.useState(false);
+  return (
+    <TouchableOpacity
+      onPress={() => onPress(item)}
+      style={[
+        styles.movieItemContainer,
+        {marginLeft: index % 2 !== 0 ? 25 : 0},
+      ]}>
+      {item['#IMG_POSTER'] ? (
+        <View style={{alignItems: 'center', justifyContent: 'center'}}>
+          <FastImage
+            source={{
+              uri: item['#IMG_POSTER'],
+              priority: FastImage.priority.high,
+            }}
+            style={styles.posterImage}
+            resizeMode="cover"
+            onLoadEnd={() => setLoadingImage(false)}
+            onLoad={() => setLoadingImage(false)}
+            onLoadStart={() => setLoadingImage(true)}
+          />
+          {loadingImage ? (
+            <ActivityIndicator style={{position: 'absolute'}} />
+          ) : null}
+        </View>
+      ) : (
+        <FastImage
+          source={images.empty_video}
+          style={styles.posterImage}
+          resizeMode="cover"
+        />
+      )}
+      <Text style={styles.movieTitle}>{item['#TITLE']}</Text>
+      <Text style={styles.movieSubTitle}>{item['#YEAR']}</Text>
+    </TouchableOpacity>
+  );
+});
 
 export default function HomeScreen({navigation}) {
   const dispatch = useDispatch();
-  const movies = useSelector(state => state.movies);
+  const {movies, loadingList, errorList} = useSelector(state => state.movies);
   const [searchText, setSearchText] = React.useState('');
   const [moviesList, setMoviesList] = React.useState([]);
 
   React.useEffect(() => {
-    if (movies.movies.length) {
-      setMoviesList(movies.movies);
+    if (movies.length) {
+      setMoviesList(movies);
     }
   }, [movies]);
 
@@ -29,13 +71,16 @@ export default function HomeScreen({navigation}) {
     dispatch(fetchMovies());
   }, [dispatch]);
 
-  const searchMovies = (text: string) => {
-    dispatch(fetchMovies(text));
-  };
+  const searchMovies = React.useCallback(
+    (text: string) => {
+      dispatch(fetchMovies(text));
+    },
+    [dispatch],
+  );
 
   const debouncedSearchMovies = React.useMemo(
     () => debounce(searchMovies, 500),
-    [],
+    [dispatch],
   );
 
   const handleSearchInputChange = (text: string) => {
@@ -48,48 +93,102 @@ export default function HomeScreen({navigation}) {
     navigation.navigate('Details', {movie});
   };
 
-  const renderItem = ({item}) => {
+  if (errorList) {
     return (
-      <TouchableOpacity
-        onPress={() => handleMoviePress(item)}
-        style={{width: '50%', alignItems: 'center', marginTop: 10}}>
-        <FastImage
-          source={{uri: item['#IMG_POSTER']}}
-          style={{width: 140, height: 170}}
-          resizeMode="cover"
-        />
-        <Text style={{marginTop: 5}}>{item['#TITLE']}</Text>
-      </TouchableOpacity>
+    <View style={styles.container}>
+        <Text style={styles.errorTitle}>{errorList}</Text>
+      </View>
     );
-  };
+  }
 
   return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 20,
-      }}>
-      <TextInput
-        placeholder="Search for movies..."
-        value={searchText}
-        onChangeText={handleSearchInputChange}
-        style={{
-          width: '100%',
-          padding: 10,
-          borderWidth: 1,
-          borderColor: 'gray',
-          marginBottom: 20,
-        }}
-      />
-
-      <FlatList
-        data={moviesList}
-        keyExtractor={item => item['#IMDB_ID']}
-        numColumns={2}
-        renderItem={renderItem}
-      />
+    <View style={styles.container}>
+      <View style={styles.wrapIputSearch}>
+        <TextInput
+          placeholder="Search for movies..."
+          value={searchText}
+          onChangeText={handleSearchInputChange}
+          style={styles.searchInput}
+          placeholderTextColor={'gray'}
+        />
+        <Image source={images.search} />
+      </View>
+      {loadingList ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#41BEAD" />
+        </View>
+      ) : (
+        <FlatList
+          data={moviesList}
+          keyExtractor={item => item['#IMDB_ID']}
+          numColumns={2}
+          renderItem={({item, index}) => (
+            <RenderMovieItem
+              item={item}
+              index={index}
+              onPress={handleMoviePress}
+            />
+          )}
+          initialNumToRender={10}
+          windowSize={3}
+          removeClippedSubviews={true}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  searchInput: {
+    width: '100%',
+    height: 50,
+    color: '#fff',
+  },
+  movieItemContainer: {
+    width: '46%',
+    marginTop: 15,
+  },
+  posterImage: {
+    width: '100%',
+    height: 250,
+    borderRadius: 10,
+  },
+  movieTitle: {
+    marginTop: 5,
+    fontSize: 16,
+    color: '#fff',
+  },
+  wrapIputSearch: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+    borderWidth: 1,
+    borderColor: '#E1E1E7',
+    marginBottom: 10,
+    borderRadius: 10,
+    marginHorizontal: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+  },
+  movieSubTitle: {
+    marginTop: 3,
+    fontSize: 14,
+    color: 'gray',
+  },
+  errorTitle: {
+    fontSize: 16,
+    color: '#fff',
+  },
+});

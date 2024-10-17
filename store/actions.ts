@@ -3,6 +3,8 @@ import {
   SET_MOVIES,
   FETCH_MOVIE_DETAIL,
   SET_SELECTED_MOVIE,
+  FETCH_MOVIES_FAIL,
+  FETCH_MOVIE_DETAIL_FAILED,
 } from './actionTypes';
 
 export const fetchMovies = (query?: string) => ({
@@ -15,6 +17,11 @@ export const setMovies = movies => ({
   payload: movies,
 });
 
+export const fetchMoviesFailed = (query?: string) => ({
+  type: FETCH_MOVIES_FAIL,
+  payload: query,
+});
+
 export const fetchMoviesDetail = (id?: string) => ({
   type: FETCH_MOVIE_DETAIL,
   payload: id,
@@ -23,4 +30,9 @@ export const fetchMoviesDetail = (id?: string) => ({
 export const setSelectedMovie = movie  => ({
   type: SET_SELECTED_MOVIE,
   payload: movie,
+});
+
+export const fetchMoviesDetaiFailed = (id?: string) => ({
+  type: FETCH_MOVIE_DETAIL_FAILED,
+  payload: id,
 });

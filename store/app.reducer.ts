@@ -1,5 +1,12 @@
 // store/app.reducer.ts
-import {SET_MOVIES, SET_SELECTED_MOVIE} from './actionTypes';
+import {
+  SET_MOVIES,
+  SET_SELECTED_MOVIE,
+  FETCH_MOVIES,
+  FETCH_MOVIE_DETAIL,
+  FETCH_MOVIES_FAIL,
+  FETCH_MOVIE_DETAIL_FAILED,
+} from './actionTypes';
 
 export interface Movie {
   '#ACTORS': string;
@@ -18,21 +25,35 @@ export interface Movie {
 interface MovieState {
   movies: Movie[];
   selectedMovie: Movie | undefined;
+  loadingList: boolean;
+  loadingDetail: boolean;
+  errorList?: string;
+  errorDetail?: string;
 }
 
 const initialState: MovieState = {
   movies: [],
   selectedMovie: undefined,
+  loadingList: true,
+  loadingDetail: true,
+  errorList: undefined,
+  errorDetail: undefined,
 };
 
 const movieReducer = (state = initialState, action: any) => {
   switch (action.type) {
+    case FETCH_MOVIES:
+      return {...state, loadingList: true};
+    case FETCH_MOVIES_FAIL:
+      return {...state, loadingList: false, errorList: action.payload};
+    case FETCH_MOVIE_DETAIL:
+      return {...state, loadingDetail: true};
+    case FETCH_MOVIE_DETAIL_FAILED:
+      return {...state, loadingList: false, errorDetail: action.payload};
     case SET_MOVIES:
-      console.log('setting movies', action.payload);
-      return {...state, movies: action.payload};
+      return {...state, movies: action.payload, loadingList: false};
     case SET_SELECTED_MOVIE:
-      console.log('setting selected movie', action.payload);
-      return {...state, selectedMovie: action.payload};
+      return {...state, selectedMovie: action.payload, loadingDetail: false};
     default:
       return state;
   }

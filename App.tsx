@@ -12,8 +12,35 @@ export default function App() {
     <Provider store={store}>
       <NavigationContainer>
         <Stack.Navigator initialRouteName="Home">
-          <Stack.Screen name="Home" component={HomeScreen} />
-          <Stack.Screen name="Details" component={DetailsScreen} />
+          <Stack.Screen
+            name="Home"
+            component={HomeScreen}
+            options={{
+              title: 'Home',
+              headerStyle: {
+                backgroundColor: 'rgba(0,0,0,0.9)',
+              },
+              headerTintColor: '#fff',
+              headerTitleStyle: {
+                fontWeight: 'bold',
+              },
+            }}
+          />
+          <Stack.Screen
+            name="Details"
+            component={DetailsScreen}
+            options={{
+              title: 'Details',
+              headerStyle: {
+                backgroundColor: 'rgba(0,0,0,0.9)',
+              },
+              headerTintColor: '#fff',
+              headerTitleStyle: {
+                fontWeight: 'bold',
+              },
+              headerShadowVisible: false,
+            }}
+          />
         </Stack.Navigator>
       </NavigationContainer>
     </Provider>
